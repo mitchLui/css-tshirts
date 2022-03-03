@@ -7,22 +7,18 @@ from traceback import format_exc
 import stripe
 import os
 
+load_dotenv(verbose=True)
 
-def load_environ(keyname: str):
-    load_dotenv(verbose=True)
-    return os.getenv(keyname)
-
-
-stripe.api_key = load_environ("STRIPE_API_KEY")
+stripe.api_key = os.getenv("STRIPE_API_KEY")
 # Cost price for one garment
-base_price = load_environ("SHIRT_COST_PRICE")
+base_price = os.getenv("SHIRT_COST_PRICE")
 # Shipping Cost Price
-shipping_fee = load_environ("SHIPPING_COST")
+shipping_fee = os.getenv("SHIPPING_COST")
 
 
 class StripeClient:
     def __init__(self) -> None:
-        self.DOMAIN = load_environ("DOMAIN")
+        self.DOMAIN = os.getenv("DOMAIN")
 
     def get_checkout_session(
         self, quantity: int, donation: float, shipping_required: bool
@@ -81,19 +77,16 @@ class StripeClient:
                                 "unit": "business_day",
                                 "value": 14,
                             },
-                            "minimum": {
-                                "unit": "business_day",
-                                "value": 7,
-                            },
                         },
                         "fixed_amount": {
-                            "currency": "gbp",
                             "amount": shipping_fee,
+                            "currency": "gbp",
                         },
                     }
                 }
 
             logger.debug(stripe.api_key)
+            logger.debug(params)
             checkout_session = stripe.checkout.Session.create(**params)
             return checkout_session.url, e
 
