@@ -16,7 +16,7 @@ def load_environ(keyname: str):
 stripe.api_key = load_environ("STRIPE_API_KEY")
 # Cost price for one garment
 base_price = load_environ("SHIRT_COST_PRICE")
-# Shipping Cost PRice
+# Shipping Cost Price
 shipping_fee = load_environ("SHIPPING_COST")
 
 
@@ -27,7 +27,9 @@ class StripeClient:
     def get_checkout_session(
         self, quantity: int, donation: float, shipping_required: bool
     ) -> str:
+        e = None
         try:
+
             line_items = [
                 {
                     "price_data": {
@@ -51,16 +53,17 @@ class StripeClient:
                             ],
                         },
                         "unit_amount_decimal": donation,
-                        "adjustable_quantity": {
-                            "enabled": False,
-                        },
-                    }
+                    },
+                    "quantity": 1,
+                    "adjustable_quantity": {
+                        "enabled": False,
+                    },
                 },
             ]
 
             params = {
                 "mode": "payment",
-                "line_items": line_items.
+                "line_items": line_items,
                 "success_url": f"{self.DOMAIN}/success",
                 "cancel_url": f"{self.DOMAIN}/cancelled",
             }
@@ -73,15 +76,28 @@ class StripeClient:
                     "shipping_rate_data": {
                         "display_name": "Hermes Shipping",
                         "type": "fixed_amount",
-                        "delivery_estimate": "14 Business Days",
-                        "fixed_amount": shipping_fee,
+                        "delivery_estimate": {
+                            "maximum": {
+                                "unit": "business_day",
+                                "value": 14,
+                            },
+                            "minimum": {
+                                "unit": "business_day",
+                                "value": 7,
+                            },
+                        },
+                        "fixed_amount": {
+                            "currency": "gbp",
+                            "amount": shipping_fee,
+                        },
                     }
                 }
 
             logger.debug(stripe.api_key)
             checkout_session = stripe.checkout.Session.create(**params)
-            return checkout_session.url
+            return checkout_session.url, e
 
         except Exception as e:
             logger.error(e)
             logger.error(format_exc())
+            return None, e

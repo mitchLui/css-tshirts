@@ -1,6 +1,7 @@
 """Striple Session Router Service"""
 from fastapi import APIRouter, Depends
 from fastapi.responses import RedirectResponse, JSONResponse
+from pymysql import InternalError
 
 from .internal.stripe_client import StripeClient
 
@@ -19,14 +20,21 @@ sc = StripeClient()
 @router.post("/create-session")
 def create_checkout_session(r: NewTransactionRequest):
     try:
-        if r.donation_amount < 3:
-            raise ValueError("The minimum donation amount is £3.")
+        if r.donation_amount < 300:
+            raise ValueError(
+                "The minimum donation amount is £3. (donation_amount value should be higher than 300"
+            )
 
         if r.shipping is not None and r.address.country != "United Kingdom":
-            raise ValueError("Shipping is only available within the UK.")
+            raise ValueError(
+                "Shipping is only available within the UK. (country value should be United Kingdom)"
+            )
 
-
-        checkout_url = sc.get_checkout_session(r.item_quantity, r.donation_amount, r.shipping)
+        checkout_url, e = sc.get_checkout_session(
+            r.item_quantity, r.donation_amount, r.shipping
+        )
+        if e:
+            raise InternalError(e)
         return JSONResponse({"checkout_url": checkout_url}, 200)
 
     except Exception as e:
