@@ -1,8 +1,10 @@
 """Striple Session Router Service"""
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from fastapi.responses import RedirectResponse, JSONResponse
 
 from .internal.stripe_client import StripeClient
+
+from .schemas.stripe_schemas import NewTransactionRequest
 
 from loguru import logger
 from traceback import format_exc
@@ -16,9 +18,9 @@ router = APIRouter(
 sc = StripeClient()
 
 @router.post("/create-session")
-def create_checkout_session(price_id: str):
+def create_checkout_session(r: NewTransactionRequest):
     try:
-        redirect = sc.get_checkout_session(price_id)
+        redirect = sc.get_checkout_session(r.amount)
         return RedirectResponse(url=redirect)
     except Exception as e:
         logger.error(e)
