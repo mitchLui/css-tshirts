@@ -22,6 +22,7 @@ app.add_middleware(
 
 app.include_router(stripe_router.router)
 
+
 @app.get("/")
 def root():
     return JSONResponse({"message": "app is running", "success": True}, 200)
