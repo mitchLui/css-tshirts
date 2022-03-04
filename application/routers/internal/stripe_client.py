@@ -20,12 +20,10 @@ class StripeClient:
     def __init__(self) -> None:
         self.DOMAIN = os.getenv("DOMAIN")
 
-    def get_checkout_session(
-        self, quantity: int, donation: float, shipping_required: bool
-    ) -> str:
+    def get_checkout_session(self, quantity: int, donation: float) -> str:
+        print(base_price)
         e = None
         try:
-
             line_items = [
                 {
                     "price_data": {
@@ -62,34 +60,54 @@ class StripeClient:
                 "line_items": line_items,
                 "success_url": f"{self.DOMAIN}/success",
                 "cancel_url": f"{self.DOMAIN}/cancelled",
-            }
-
-            if shipping_required:
-                params["shipping_address_collection"] = {
+                "shipping_address_collection": {
                     "allowed_countries": ["GB"],
-                }
-                params["shipping_options"] = {
-                    "shipping_rate_data": {
-                        "display_name": "Hermes Shipping",
-                        "type": "fixed_amount",
-                        "delivery_estimate": {
-                            "maximum": {
-                                "unit": "business_day",
-                                "value": 14,
+                },
+                "shipping_options": [
+                    {
+                        "shipping_rate_data": {
+                            "display_name": "Collection from MVB",
+                            "type": "fixed_amount",
+                            "fixed_amount": {
+                                "amount": 0,
+                                "currency": "gbp",
                             },
-                        },
-                        "fixed_amount": {
-                            "amount": shipping_fee,
-                            "currency": "gbp",
-                        },
-                    }
-                }
+                            "delivery_estimate": {
+                                "maximum": {
+                                    "unit": "business_day",
+                                    "value": 7,
+                                },
+                            },
+                        }
+                    },
+                    {
+                        "shipping_rate_data": {
+                            "display_name": "Hermes Shipping",
+                            "type": "fixed_amount",
+                            "fixed_amount": {
+                                "amount": shipping_fee,
+                                "currency": "gbp",
+                            },
+                            "delivery_estimate": {
+                                "maximum": {
+                                    "unit": "business_day",
+                                    "value": 14,
+                                },
+                            },
+                        }
+                    },
+                ],
+            }
 
             logger.debug(stripe.api_key)
             logger.debug(params)
             checkout_session = stripe.checkout.Session.create(**params)
             return checkout_session.url, e
-
+        except stripe.error.InvalidRequestError as e:
+            logger.error(e)
+            logger.error("Error in field: " + e.param)
+            logger.error(format_exc())
+            return None, e
         except Exception as e:
             logger.error(e)
             logger.error(format_exc())

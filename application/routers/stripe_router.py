@@ -25,14 +25,7 @@ def create_checkout_session(r: NewTransactionRequest):
                 "The minimum donation amount is £3. (donation_amount value should be higher than 300"
             )
 
-        if r.shipping is not None and r.address.country != "United Kingdom":
-            raise ValueError(
-                "Shipping is only available within the UK. (country value should be United Kingdom)"
-            )
-
-        checkout_url, e = sc.get_checkout_session(
-            r.item_quantity, r.donation_amount, r.shipping
-        )
+        checkout_url, e = sc.get_checkout_session(r.item_quantity, r.donation_amount)
         if e:
             raise InternalError(e)
         return JSONResponse({"checkout_url": checkout_url}, 200)
