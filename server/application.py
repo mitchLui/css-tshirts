@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from routers import stripe_router
+from routers import webhook_router
 
 from loguru import logger
 import uvicorn
@@ -21,6 +22,7 @@ app.add_middleware(
 )
 
 app.include_router(stripe_router.router)
+app.include_router(webhook_router.router)
 
 @app.get("/")
 def root():

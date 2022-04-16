@@ -17,7 +17,7 @@ router = APIRouter(
 
 sc = StripeClient()
 
-@router.post("/create-session")
+@router.post("/checkout")
 def create_checkout_session(r: NewTransactionRequest):
     try:
         redirect = sc.get_checkout_session(r.amount)
