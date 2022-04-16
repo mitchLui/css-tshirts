@@ -1,6 +1,16 @@
 version: '3'
 
 services:
+  backend:
+    image: "backend"
+    hostname: "backend"
+    container_name: "backend"
+    environment:
+      - PORT=80
+    build: 
+      context: ./server
+    ports:
+      - 80:80
   db:
     image: mysql
     container_name: db
